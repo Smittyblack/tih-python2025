@@ -1,0 +1,4 @@
+{% for message in messages %}
+    <p>{{ message.sender.username }} ({{ message.timestamp }}): {{ message.content }}</p>
+{% endfor %}
+<a href="{% url 'send_message' correspondent_id %}">Send Message</a>

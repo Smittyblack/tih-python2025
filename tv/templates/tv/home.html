@@ -1,0 +1,24 @@
+<!-- internethub/tv/templates/tv/home.html -->
+{% extends 'core/base.html' %}
+{% block content %}
+    <h1>TV Hub</h1>
+    <div class="video-grid">
+        {% for video in videos %}
+            <div class="video-card">
+                <h3>{{ video.title }}</h3>
+                {% if video.file %}
+                    <video width="200" controls>
+                        <source src="{{ video.file.url }}" type="video/mp4">
+                    </video>
+                {% elif video.video_url %}
+                    <iframe width="200" height="150" src="{{ video.video_url }}" frameborder="0" allowfullscreen></iframe>
+                {% endif %}
+                <p>Posted by {{ video.user.username }} on {{ video.created_at }}</p>
+            </div>
+        {% endfor %}
+    </div>
+    <style>
+        .video-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        .video-card { border: 1px solid #ccc; padding: 10px; }
+    </style>
+{% endblock %}

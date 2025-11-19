@@ -1,0 +1,90 @@
+{% extends 'core/base.html' %}
+{% load humanize %}
+{% block content %}
+    <div class="content-box">
+        <h2>{{ profile_user.username }}</h2>
+        {% if profile_user.profile.profile_picture %}
+            <img src="{{ profile_user.profile.profile_picture.url }}" width="100">
+        {% endif %}
+        <p>{{ profile_user.profile.bio }}</p>
+        <p>Total Post Votes: {{ profile_user.profile.post_votes }}</p>
+        <p>Total Comment Votes: {{ profile_user.profile.comment_votes }}</p>
+
+        {% if request.user.profile.group in 'moderator,admin' %}
+            <h3>Hidden Content</h3>
+            {% for post in hidden_posts %}
+                <p><a href="{% url 'post_detail' post.id %}">{{ post.title }}</a> ({{ post.post_type }})</p>
+            {% endfor %}
+            {% for comment in hidden_comments %}
+                <p><a href="{% url 'direct_comment' comment.id %}">{{ comment.content|truncatechars:50 }}</a> on <a href="{% url 'post_detail' comment.post.id %}">{{ comment.post.title }}</a></p>
+            {% endfor %}
+        {% endif %}
+
+        <h3>Images</h3>
+        <div class="post-boxes">
+            {% for post in image_posts %}
+                <div class="post-box">
+                    <a href="{% url 'post_detail' post.id %}">{{ post.title }}</a> [Votes: {{ post.votes }}]
+                </div>
+            {% empty %}
+                <p>No images posted.</p>
+            {% endfor %}
+        </div>
+
+        <h3>Videos</h3>
+        <div class="post-boxes">
+            {% for post in video_posts %}
+                <div class="post-box">
+                    <a href="{% url 'post_detail' post.id %}">{{ post.title }}</a> [Votes: {{ post.votes }}]
+                </div>
+            {% empty %}
+                <p>No videos posted.</p>
+            {% endfor %}
+        </div>
+
+        <h3>Audio</h3>
+        <div class="post-boxes">
+            {% for post in audio_posts %}
+                <div class="post-box">
+                    <a href="{% url 'post_detail' post.id %}">{{ post.title }}</a> [Votes: {{ post.votes }}]
+                </div>
+            {% empty %}
+                <p>No audio posted.</p>
+            {% endfor %}
+        </div>
+
+        <h3>Text & Links</h3>
+        <div class="post-boxes">
+            {% for post in text_link_posts %}
+                <div class="post-box">
+                    <a href="{% url 'post_detail' post.id %}">{{ post.title }}</a> [Votes: {{ post.votes }}]
+                </div>
+            {% empty %}
+                <p>No text or links posted.</p>
+            {% endfor %}
+        </div>
+
+        <h3>Comments</h3>
+        {% for comment in comments %}
+            <p>
+                <a href="{% url 'direct_comment' comment.id %}">{{ comment.content|truncatechars:50 }}</a>
+                on <a href="{% url 'post_detail' comment.post.id %}">{{ comment.post.title }}</a>
+                [{{ comment.votes|add:"0" }}]
+            </p>
+        {% endfor %}
+    </div>
+
+    <style>
+        .post-boxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .post-box {
+            border: 1px solid #00ff00;
+            padding: 10px;
+            background-color: #2a2a2a;
+            width: 200px;
+        }
+    </style>
+{% endblock %}

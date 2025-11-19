@@ -1,0 +1,267 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #333333; /* Grey background like the old site */
+    color: #ffffff; /* White text for contrast */
+}
+.header {
+    padding: 10px;
+    background-color: #444444; /* Slightly lighter grey for header */
+    overflow: visible;
+    position: relative;
+}
+.site-title {
+    margin: 0;
+    font-size: 24px;
+}
+.site-title a {
+    color: #00FF00; /* Green accent like the old site */
+    text-decoration: none;
+}
+.navbar {
+    background-color: #00FF00; /* Green navbar */
+    overflow: visible;
+}
+.navbar ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+}
+.navbar li {
+    position: relative;
+}
+.navbar a {
+    display: block;
+    color: #000000; /* Black text on green background */
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+.navbar li:hover > a {
+    background-color: #009900; /* Darker green on hover */
+}
+.navbar .dropdown-content {
+    display: none;
+    position: absolute !important;
+    top: 100% !important;
+    left: 0 !important;
+    background-color: #00FF00; /* Green dropdown */
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
+.navbar .dropdown-content a {
+    color: #000000; /* Black text in dropdown */
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+}
+.navbar .dropdown-content a:hover {
+    background-color: #009900; /* Darker green on hover */
+}
+.navbar li:hover .dropdown-content {
+    display: block !important;
+}
+.upload-section {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: #ffffff; /* White text for contrast */
+}
+.upload-section a {
+    color: #00FF00; /* Green links */
+    text-decoration: none;
+    margin: 0 5px;
+}
+.upload-section a:hover {
+    color: #009900; /* Darker green on hover */
+}
+.upload-item {
+    margin-left: auto;
+}
+.tab.active {
+    background-color: #009900; /* Darker green */
+    color: #000000;
+}
+.tab {
+    background-color: #00FF00; /* Regular green */
+    color: #ffffff;
+}
+.content-box {
+    background-color: #444444; /* Grey box for content area */
+    padding: 20px;
+    margin: 20px;
+    border: 2px solid #00FF00; /* Green border */
+    border-radius: 5px;
+}
+.content-box h2 {
+    color: #00FF00; /* Green title */
+}
+.content-box input[type="text"],
+.content-box textarea {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    background-color: #555555; /* Darker grey input background */
+    border: 1px solid #00FF00; /* Green border */
+    color: #ffffff; /* White text */
+}
+.content-box button {
+    background-color: #00FF00; /* Green button */
+    color: #000000; /* Black text */
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+}
+.content-box button:hover {
+    background-color: #009900; /* Darker green on hover */
+}
+footer {
+    background-color: #444444;
+    padding: 10px;
+    text-align: center;
+    color: #ffffff;
+}
+footer a {
+    color: #00FF00;
+    text-decoration: none;
+}
+
+/* New Styles for Links and Buttons */
+.delete-btn, .perm-delete-btn, .reply-btn, .submit-reply-btn {
+    background-color: #ff4444; /* Red background for delete actions */
+    color: #ffffff; /* White text */
+    padding: 5px 10px;
+    margin: 0 5px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 3px;
+}
+.delete-btn:hover, .perm-delete-btn:hover {
+    background-color: #cc0000; /* Darker red on hover */
+}
+.reply-btn {
+    background-color: #00FF00; /* Green background for reply */
+    color: #000000; /* Black text */
+}
+.reply-btn:hover {
+    background-color: #009900; /* Darker green on hover */
+}
+.submit-reply-btn {
+    background-color: #00FF00; /* Green background for submit */
+    color: #000000; /* Black text */
+}
+.submit-reply-btn:hover {
+    background-color: #009900; /* Darker green on hover */
+}
+.direct-link {
+    color: #00FF00; /* Green link */
+    text-decoration: none;
+    margin-left: 10px;
+}
+.direct-link:hover {
+    color: #009900; /* Darker green on hover */
+}
+.reply-form {
+    margin-top: 10px;
+}
+.reply-textarea {
+    width: 100%;
+    max-width: 500px;
+    min-height: 80px;
+    background-color: #555555;
+    border: 1px solid #00FF00;
+    color: #ffffff;
+    padding: 10px;
+    resize: vertical;
+}
+.upload-section .username-link, .upload-section .mod-panel-link {
+    color: #00FF00; /* Green for username and mod panel */
+    text-decoration: none;
+    margin-right: 10px;
+}
+.upload-section .username-link:hover, .upload-section .mod-panel-link:hover {
+    color: #009900; /* Darker green on hover */
+}
+
+/* Existing styles from your provided style.css remain unchanged... */
+
+/* Add these new styles for upload.html */
+.thumbnail-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 1000;
+}
+.thumbnail-content {
+    background: #444;
+    padding: 20px;
+    max-width: 800px;
+    margin: 50px auto;
+    text-align: center;
+    position: relative;
+}
+.thumbnail-preview {
+    max-width: 100%;
+    max-height: 400px;
+    display: block;
+    margin: 20px auto;
+}
+.cropper-container {
+    max-width: 100%;
+    max-height: 400px;
+    margin: 20px auto;
+}
+.cropper-controls {
+    margin: 10px 0;
+}
+.tab-container {
+    display: flex;
+    margin-bottom: 20px;
+}
+.tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    background-color: #00FF00;
+    color: #ffffff;
+    border: 1px solid #009900;
+    margin-right: 5px;
+}
+.tab.active {
+    background-color: #009900;
+    color: #000000;
+}
+.tab-content {
+    display: none;
+}
+.tab-content.active {
+    display: block;
+}
+.content-textarea {
+    background-color: #555555;
+    border: 1px solid #00FF00;
+    color: #ffffff;
+    width: 100%;
+    min-height: 100px;
+    display: block;
+    resize: vertical;
+}
+#editor-container {
+    background-color: #555555;
+    border: 1px solid #00FF00;
+    color: #ffffff;
+    width: 100%;
+    min-height: 100px;
+    display: block;
+}
+.prosemirror-editor {
+    padding: 10px;
+    outline: none;
+}

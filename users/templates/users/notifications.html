@@ -1,0 +1,15 @@
+{% extends 'core/base.html' %}
+{% load humanize %}
+
+{% block content %}
+    <div class="content-box">
+        <h2>Notifications ({{ unread_count }} unread)</h2>
+        {% for notification in notifications %}
+            <p {% if not notification.is_read %}style="font-weight: bold;"{% endif %}>
+                {{ notification.message|safe }} - {{ notification.created_at|naturaltime }} on <a href="{{ notification.link }}">[Post]</a>
+            </p>
+        {% empty %}
+            <p>No notifications.</p>
+        {% endfor %}
+    </div>
+{% endblock %}

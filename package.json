@@ -1,0 +1,25 @@
+{
+  "name": "internethub",
+  "version": "0.0.1",
+  "description": "beta TIH",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "manage.py",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@tiptap/core": "^2.11.5",
+    "@tiptap/extension-image": "^2.11.5",
+    "@tiptap/extension-link": "^2.11.5",
+    "@tiptap/extension-youtube": "^2.11.5",
+    "@tiptap/starter-kit": "^2.11.5"
+  },
+  "devDependencies": {
+    "prosemirror-model": "^1.24.1",
+    "prosemirror-state": "^1.4.3",
+    "prosemirror-transform": "^1.10.3",
+    "prosemirror-view": "^1.38.1"
+  }
+}

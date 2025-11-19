@@ -1,0 +1,16 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="content-box">
+        <h2>Register</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Register</button>
+        </form>
+        <p>
+            <a href="{% url 'login' %}">Login</a>
+        </p>
+    </div>
+{% endblock %}
