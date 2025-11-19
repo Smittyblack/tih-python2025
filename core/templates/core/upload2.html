@@ -1,0 +1,467 @@
+{% extends 'content/base.html' %}
+{% load static %}
+
+{% block head %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.12/dist/cropper.min.css">
+    <link rel="stylesheet" href="/static/tiptap/starter-kit/dist/tiptap.css">
+    <style>
+        .thumbnail-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
+        .thumbnail-content { background: #444; padding: 20px; max-width: 800px; margin: 50px auto; text-align: center; position: relative; }
+        #thumbnail-preview { max-width: 100%; max-height: 400px; display: block; margin: 20px auto; }
+        .cropper-container { max-width: 100%; max-height: 400px; margin: 20px auto; }
+        #thumbnail-image-select { margin-bottom: 20px; width: 100%; max-width: 400px; }
+        button { margin: 10px; padding: 5px 10px; background: #00FF00; color: #fff; border: none; cursor: pointer; }
+        button:hover { background: #009900; }
+        .cropper-controls { margin: 10px 0; }
+        .cropper-view-box, .cropper-face { border-radius: 0; }
+        .tab-container { display: flex; margin-bottom: 20px; }
+        .tab { padding: 10px 20px; cursor: pointer; background-color: #00FF00; color: #ffffff; border: 1px solid #009900; margin-right: 5px; }
+        .tab.active { background-color: #009900; color: #000000; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .content-box input[type="text"] { background-color: #555555; border: 1px solid #00FF00; color: #ffffff; width: 100%; height: 30px; }
+        .content-box textarea { background-color: #555555; border: 1px solid #00FF00; color: #ffffff; width: 100%; min-height: 100px; display: block; resize: vertical; }
+        #editor-container { background-color: #555555; border: 1px solid #00FF00; color: #ffffff; width: 100%; min-height: 100px; display: block; pointer-events: auto; }
+        .prosemirror-editor { padding: 10px; outline: none; }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="content-box">
+        <h2>Create Post</h2>
+        <div class="tab-container">
+    <button type="button" class="tab active" data-type="text">Text</button>
+    <button type="button" class="tab" data-type="image">Images</button>
+    <button type="button" class="tab" data-type="video">Video</button>
+    <button type="button" class="tab" data-type="audio">Audio</button>
+    <button type="button" class="tab" data-type="link">Link</button>
+</div>
+        <form method="post" enctype="multipart/form-data" id="upload-form">
+            {% csrf_token %}
+            <input type="hidden" name="post_type" id="post-type-hidden">
+
+            <div id="text-tab" class="tab-content active">
+                <label for="id_title">Title *</label>
+                <input type="text" name="title" id="id_title">
+                <label for="id_content">Body</label>
+                <div id="editor-container"></div>
+                <input type="hidden" name="content" id="id_content">
+                <label for="id_thumbnail_text">Thumbnail (optional)</label>
+                <input type="file" name="thumbnail" id="id_thumbnail_text" accept="image/jpeg,image/png,image/gif">
+                <button type="submit">Submit</button>
+                <button type="button" id="toggle-markdown">Switch to Markdown Editor</button>
+            </div>
+            <div id="image-tab" class="tab-content">
+                <label for="id_title">Title *</label>
+                <input type="text" name="title" id="id_title">
+                <label for="id_files">Images *</label>
+                <input type="file" name="files" id="id_files" multiple accept="image/jpeg,image/png,image/gif">
+                <div id="image-preview"></div>
+                <label for="id_description_image">Description (optional)</label>
+                <textarea name="description" id="id_description_image" rows="4"></textarea>
+                <button type="submit">Submit</button>
+            </div>
+            <div id="video-tab" class="tab-content">
+                <label for="id_title">Title *</label>
+                <input type="text" name="title" id="id_title">
+                <label for="id_video_file">Upload Video</label>
+                <input type="file" name="video_file" id="id_video_file" accept="video/mp4,video/avi,video/quicktime">
+                <label for="id_video_url">Or Enter YouTube URL</label>
+                <input type="url" name="video_url" id="id_video_url" placeholder="https://www.youtube.com/watch?v=...">
+                <label for="id_description_video">Description (optional)</label>
+                <textarea name="description" id="id_description_video" rows="4"></textarea>
+                <label for="id_thumbnail_video">Thumbnail (optional)</label>
+                <input type="file" name="thumbnail" id="id_thumbnail_video" accept="image/jpeg,image/png,image/gif">
+                <button type="button" id="select-video-timestamp">Select Thumbnail from Timestamp</button>
+                <button type="submit">Submit</button>
+            </div>
+            <div id="audio-tab" class="tab-content">
+                <label for="id_title">Title *</label>
+                <input type="text" name="title" id="id_title">
+                <label for="id_audio_file">Audio *</label>
+                <input type="file" name="audio_file" id="id_audio_file" accept="audio/mpeg,audio/wav,audio/ogg">
+                <label for="id_description_audio">Description (optional)</label>
+                <textarea name="description" id="id_description_audio" rows="4"></textarea>
+                <label for="id_thumbnail_audio">Thumbnail (optional)</label>
+                <input type="file" name="thumbnail" id="id_thumbnail_audio" accept="image/jpeg,image/png,image/gif">
+                <button type="submit">Submit</button>
+            </div>
+            <div id="link-tab" class="tab-content">
+                <label for="id_title">Title *</label>
+                <input type="text" name="title" id="id_title">
+                <label for="id_url">URL *</label>
+                <input type="url" name="url" id="id_url">
+                <label for="id_description_link">Description (optional)</label>
+                <textarea name="description" id="id_description_link" rows="4"></textarea>
+                <button type="submit">Submit</button>
+            </div>
+        </form>
+
+        <!-- Thumbnail Selection Overlay -->
+        <div id="thumbnail-overlay" class="thumbnail-overlay">
+            <div class="thumbnail-content">
+                <h3>Select Thumbnail</h3>
+                <select id="thumbnail-image-select" style="display: none;"></select>
+                <img id="thumbnail-preview" style="max-width: 100%; max-height: 400px; display: block;">
+                <div class="cropper-controls">
+                    <button type="button" id="zoom-in">Zoom In</button>
+                    <button type="button" id="zoom-out">Zoom Out</button>
+                </div>
+                <button id="save-crop">Save</button>
+                <button id="cancel-crop">Skip</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.12/dist/cropper.min.js"></script>
+    <script type="module">
+        import { Editor } from 'https://esm.sh/@tiptap/core@2.2.4';
+        import StarterKit from 'https://esm.sh/@tiptap/starter-kit@2.2.4';
+        import Link from 'https://esm.sh/@tiptap/extension-link@2.2.4';
+        import Image from 'https://esm.sh/@tiptap/extension-image@2.2.4';
+        import Youtube from 'https://esm.sh/@tiptap/extension-youtube@2.2.4';
+
+        window.addEventListener('load', function() {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const postTypeInput = document.getElementById('post-type-hidden');
+            const form = document.getElementById('upload-form');
+            const overlay = document.getElementById('thumbnail-overlay');
+            const thumbnailSelect = document.getElementById('thumbnail-image-select');
+            const thumbnailPreview = document.getElementById('thumbnail-preview');
+            let cropper = null;
+            let isSubmitting = false; // Prevent multiple submissions
+
+            function setupTabs() {
+                tabContents.forEach(tc => tc.style.display = 'none');
+                const urlParams = new URLSearchParams(window.location.search);
+                const initialType = urlParams.get('type') || 'text';
+                const defaultTab = document.getElementById(initialType + '-tab');
+                defaultTab.style.display = 'block';
+                postTypeInput.value = initialType;
+                tabs.forEach(t => t.classList.remove('active'));
+                const activeTabButton = document.querySelector(`.tab[data-type="${initialType}"]`);
+                if (activeTabButton) activeTabButton.classList.add('active');
+
+                tabs.forEach(tab => {
+                    tab.addEventListener('click', function() {
+                        tabs.forEach(t => t.classList.remove('active'));
+                        tabContents.forEach(tc => tc.style.display = 'none');
+                        this.classList.add('active');
+                        const activeTab = document.getElementById(this.dataset.type + '-tab');
+                        activeTab.style.display = 'block';
+                        postTypeInput.value = this.dataset.type;
+
+                        const url = new URL(window.location);
+                        url.searchParams.set('type', this.dataset.type);
+                        window.history.pushState({}, '', url);
+
+                        overlay.style.display = 'none';
+                        thumbnailSelect.style.display = 'none';
+                        thumbnailSelect.innerHTML = '';
+                        thumbnailPreview.src = '';
+                        if (cropper) {
+                            cropper.destroy();
+                            cropper = null;
+                        }
+
+                        if (this.dataset.type === 'text' && !editor) {
+                            initializeEditor();
+                        }
+                    });
+                });
+                console.log('Tabs initialized, active tab:', initialType);
+            }
+
+            let editor;
+            const editorContainer = document.getElementById('editor-container');
+            function initializeEditor() {
+                if (!editorContainer) {
+                    console.error('Editor container not found');
+                    return;
+                }
+                editorContainer.innerHTML = '';
+                try {
+                    editor = new Editor({
+                        element: editorContainer,
+                        extensions: [
+                            StarterKit.configure({ history: true }),
+                            Link,
+                            Image,
+                            Youtube,
+                        ],
+                        content: '<p>Hello, TipTap!</p>',
+                        editable: true,
+                        editorProps: { attributes: { class: 'prosemirror-editor' } },
+                        onUpdate: ({ editor }) => {
+                            document.getElementById('id_content').value = editor.getHTML();
+                        },
+                    });
+                    console.log('Editor initialized:', editor);
+                    editorContainer.style.pointerEvents = 'auto';
+                } catch (e) {
+                    console.error('Failed to initialize editor:', e);
+                    const textarea = document.createElement('textarea');
+                    textarea.id = 'id_content_fallback';
+                    textarea.name = 'content';
+                    textarea.style.width = '100%';
+                    textarea.style.height = '200px';
+                    editorContainer.appendChild(textarea);
+                }
+            }
+
+            function initializeCropper(imageElement) {
+                console.log('Initializing cropper for image element:', imageElement);
+                if (cropper) {
+                    console.log('Destroying existing cropper');
+                    cropper.destroy();
+                }
+                imageElement.style.display = 'none'; // Hide original image to prevent duplicates
+                cropper = new Cropper(imageElement, {
+                    aspectRatio: 16 / 9,
+                    viewMode: 1,
+                    zoomable: true,
+                    scalable: true,
+                    movable: true,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    autoCropArea: 0.8,
+                    dragMode: 'move',
+                    background: true,
+                    guides: true,
+                    minCropBoxWidth: 50,
+                    minCropBoxHeight: 50,
+                    ready: function() {
+                        console.log('Cropper initialized');
+                        const container = imageElement.parentElement.querySelector('.cropper-container');
+                        if (container) {
+                            container.style.maxWidth = '100%';
+                            container.style.maxHeight = '400px';
+                        }
+                    }
+                });
+            }
+
+            setupTabs();
+            if (postTypeInput.value === 'text') {
+                initializeEditor();
+            }
+
+            const toggleMarkdown = document.getElementById('toggle-markdown');
+            let isMarkdown = false;
+            if (toggleMarkdown) {
+                toggleMarkdown.addEventListener('click', function() {
+                    isMarkdown = !isMarkdown;
+                    if (isMarkdown) {
+                        if (editor) {
+                            const currentContent = editor.getHTML();
+                            editor.destroy();
+                            editor = null;
+                            editorContainer.innerHTML = '';
+                            const textarea = document.createElement('textarea');
+                            textarea.id = 'id_content_fallback';
+                            textarea.name = 'content';
+                            textarea.style.width = '100%';
+                            textarea.style.height = '200px';
+                            textarea.value = currentContent;
+                            editorContainer.appendChild(textarea);
+                            this.textContent = 'Switch to Rich Text Editor';
+                        }
+                    } else {
+                        const textarea = document.getElementById('id_content_fallback');
+                        const markdownContent = textarea ? textarea.value : '';
+                        editorContainer.innerHTML = '';
+                        initializeEditor();
+                        if (editor) {
+                            editor.setContent(markdownContent);
+                        }
+                        this.textContent = 'Switch to Markdown Editor';
+                    }
+                });
+            }
+
+            let postId;
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                if (isSubmitting) {
+                    console.log('Form already submitting, ignoring duplicate submission');
+                    return;
+                }
+                isSubmitting = true;
+                console.log('Form submit triggered');
+
+                const formData = new FormData();
+                const postType = postTypeInput.value;
+
+                const activeTab = document.getElementById(`${postType}-tab`);
+                const inputs = activeTab.querySelectorAll('input, textarea');
+                inputs.forEach(input => {
+                    if (input.type === 'file' && input.files.length) {
+                        for (let file of input.files) {
+                            formData.append(input.name, file);
+                        }
+                    } else if (input.value) {
+                        formData.set(input.name, input.value);
+                    }
+                });
+                formData.set('post_type', postType);
+                formData.set('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+                if (postType === 'text' || postType === 'audio') {
+                    if (editor && !isMarkdown && postType === 'text') {
+                        formData.set('content', editor.getHTML());
+                    } else if (postType === 'text') {
+                        const textarea = document.getElementById('id_content_fallback');
+                        if (textarea) {
+                            formData.set('content', textarea.value);
+                        }
+                    }
+                }
+
+                const titleInput = activeTab.querySelector('input[name="title"]');
+                if (!titleInput.value.trim()) {
+                    alert('Title is required');
+                    isSubmitting = false;
+                    return;
+                }
+                if (postType === 'image' && !formData.getAll('files').length) {
+                    alert('At least one image is required');
+                    isSubmitting = false;
+                    return;
+                }
+                if (postType === 'audio' && !formData.get('audio_file')) {
+                    alert('An audio file is required');
+                    isSubmitting = false;
+                    return;
+                }
+                if (postType === 'link' && !formData.get('url')) {
+                    alert('A URL is required');
+                    isSubmitting = false;
+                    return;
+                }
+
+                console.log('Submitting form with post_type:', postType, 'Form data:', Array.from(formData.entries()));
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData,
+                }).then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok: ' + response.statusText);
+                    return response.json();
+                }).then(data => {
+                    console.log('Form submission response:', data);
+                    if (data.success) {
+                        postId = data.post_id;
+                        if (postType === 'image' || (formData.get('thumbnail') && (postType === 'text' || postType === 'audio'))) {
+                            console.log('Showing thumbnail overlay');
+                            overlay.style.display = 'block';
+                            if (postType === 'image') {
+                                thumbnailSelect.style.display = 'block';
+                                thumbnailSelect.innerHTML = '';
+                                fetch(`/post/${postId}/`).then(resp => resp.text()).then(html => {
+                                    console.log('Fetched post HTML for image selection');
+                                    const parser = new DOMParser();
+                                    const doc = parser.parseFromString(html, 'text/html');
+                                    const images = doc.querySelectorAll('img');
+                                    images.forEach(img => {
+                                        const option = document.createElement('option');
+                                        option.value = img.src;
+                                        option.text = img.src.split('/').pop();
+                                        thumbnailSelect.appendChild(option);
+                                    });
+                                    thumbnailPreview.src = thumbnailSelect.value;
+                                    console.log('Setting thumbnailPreview.src to:', thumbnailSelect.value);
+                                    initializeCropper(thumbnailPreview);
+                                }).catch(error => {
+                                    console.error('Error fetching post images:', error);
+                                    isSubmitting = false;
+                                });
+                            } else {
+                                thumbnailSelect.style.display = 'none';
+                                const thumbnailURL = URL.createObjectURL(formData.get('thumbnail'));
+                                thumbnailPreview.src = thumbnailURL;
+                                console.log('Setting thumbnailPreview.src to:', thumbnailURL);
+                                initializeCropper(thumbnailPreview);
+                            }
+                        } else {
+                            console.log('Redirecting to post detail page');
+                            window.location.href = `/post/${postId}/`;
+                        }
+                    } else {
+                        console.error('Form error:', data.error);
+                        alert('Error submitting post: ' + (data.error || 'Unknown error'));
+                    }
+                }).catch(error => {
+                    console.error('Submission error:', error);
+                    alert('Submission failed: ' + error.message);
+                }).finally(() => {
+                    isSubmitting = false;
+                });
+            });
+
+            document.getElementById('save-crop').addEventListener('click', function() {
+                if (!cropper) {
+                    console.error('Cropper not initialized');
+                    alert('Unable to save: Cropper not initialized');
+                    return;
+                }
+                cropper.getCroppedCanvas({ maxWidth: 800, maxHeight: 450 }).toBlob(function(blob) {
+                    const formData = new FormData();
+                    formData.append('thumbnail', blob, 'thumbnail.jpg');
+                    formData.append('post_id', postId);  // Add post_id to identify the post
+                    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+                    console.log('Saving cropped thumbnail for post:', postId);
+                    fetch('/upload/', {  // Send to upload endpoint
+                        method: 'POST',
+                        body: formData,
+                    }).then(response => {
+                        if (!response.ok) throw new Error('Network response was not ok: ' + response.statusText);
+                        return response.json();
+                    }).then(data => {
+                        if (data.success) {
+                            console.log('Thumbnail saved successfully');
+                            overlay.style.display = 'none';
+                            window.location.href = '/post/' + postId + '/';
+                        } else {
+                            console.error('Save error:', data.error);
+                            alert('Error saving thumbnail: ' + (data.error || 'Unknown error'));
+                        }
+                    }).catch(error => {
+                        console.error('Fetch error:', error);
+                        alert('Error saving thumbnail: ' + error.message);
+                    });
+                }, 'image/jpeg', 0.9);
+            });
+
+            document.getElementById('cancel-crop').addEventListener('click', function() {
+                console.log('Skipping thumbnail selection');
+                overlay.style.display = 'none';
+                window.location.href = '/post/' + postId + '/';
+            });
+
+            if (thumbnailSelect) {
+                thumbnailSelect.addEventListener('change', function() {
+                    const newSrc = this.value;
+                    if (cropper) {
+                        cropper.replace(newSrc);
+                        console.log('Preview updated to:', newSrc);
+                    }
+                });
+            }
+
+            document.getElementById('zoom-in').addEventListener('click', function() {
+                if (cropper) {
+                    cropper.zoom(0.1);
+                    console.log('Zoomed in');
+                }
+            });
+
+            document.getElementById('zoom-out').addEventListener('click', function() {
+                if (cropper) {
+                    cropper.zoom(-0.1);
+                    console.log('Zoomed out');
+                }
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,194 @@
+{% load static %}
+{% load humanize %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}The Internet Hub{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=3">
+    <link rel="icon" type="image/x-icon" href="{% static 'icons/site/favicon.ico' %}">
+    <style>
+        .dropdown {
+            position: relative;
+            display: inline-block;
+        }
+
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #2a2a2a;
+            min-width: 160px;
+            z-index: 1;
+        }
+
+            .dropdown-content a {
+                color: #fff;
+                padding: 12px 16px;
+                text-decoration: none;
+                display: block;
+            }
+
+                .dropdown-content a:hover {
+                    background-color: #009900;
+                }
+
+        .dropdown:hover .dropdown-content {
+            display: block;
+        }
+
+        .dropdown-arrow {
+            margin-left: 5px;
+        }
+
+        .announcement-strip {
+            width: 100%;
+            background-color: #2a2a2a;
+            padding: 5px 0;
+            border-bottom: 1px solid #00ff00;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .announcement-box {
+            max-width: 1200px;
+            padding: 0 20px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .content-wrapper {
+            margin: 0;
+        }
+
+        .navbar ul {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .navbar .upload-item {
+            margin-left: auto;
+        }
+
+        .notification-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            background-color: #2a2a2a;
+            min-width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #00ff00;
+            z-index: 1000;
+            color: #fff;
+        }
+
+        .notification-item {
+            padding: 10px;
+            border-bottom: 1px solid #444;
+        }
+
+            .notification-item:last-child {
+                border-bottom: none;
+            }
+
+            .notification-item a {
+                color: #00ff00;
+                text-decoration: none;
+            }
+
+                .notification-item a:hover {
+                    text-decoration: underline;
+                }
+
+        .see-all {
+            text-align: center;
+            padding: 10px;
+            background-color: #009900;
+        }
+
+            .see-all a {
+                color: #fff;
+                text-decoration: none;
+            }
+
+        .unread-count {
+            color: #ff0000;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'icons/site/tih_logo.png' %}" alt="Internet Hub Logo" class="site-logo">
+        </a>
+        <div class="navbar">
+            <ul>
+                <li><a href="{% url 'images' %}">Images</a></li>
+                <li><a href="{% url 'videos' %}">Videos</a></li>
+                <li><a href="{% url 'audio' %}">Audio</a></li>
+                <li><a href="{% url 'text_links' %}">Text & Links</a></li>
+                <li class="dropdown">
+                    <a href="#">Community</a>
+                    <div class="dropdown-content">
+                        <a href="{% url 'users_list' %}">Users</a>
+                        <a href="{% url 'forums' %}">Forums</a>
+                        <a href="{% url 'group_list' %}">Groups</a>
+                    </div>
+                </li>
+                {% if user.is_authenticated %}
+                <li class="upload-item">
+                    <a href="{% url 'upload_post' %}">Create Post</a>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    <div class="upload-section">
+        {% if user.is_authenticated %}
+        <span style="margin-right: 10px;" class="dropdown">
+            <a href="#" id="notifications-link">Notifications {% if unread_notifications > 0 %}(<span class="unread-count">{{ unread_notifications }}</span>){% endif %}</a>
+            <div class="notification-dropdown" id="notification-dropdown">
+                <div id="notification-list"></div>
+                <div class="see-all">
+                    <a href="{% url 'notifications' %}">See all notifications</a>
+                </div>
+            </div>
+        </span>
+        <span style="margin-right: 10px;" class="dropdown">
+            <a href="{% url 'user_profile' user.username %}" class="username-link">{{ user.username }}</a>
+            <span class="dropdown-arrow">▼</span>
+            <div class="dropdown-content">
+                <a href="{% url 'user_profile' user.username %}">Profile</a>
+                <a href="{% url 'user_settings' %}">Account Settings</a>
+                <a href="{% url 'logout' %}">Logout</a>
+            </div>
+        </span>
+        {% if user.profile.group in 'moderator,admin' %}
+        <a href="{% url 'mod_panel' %}" class="mod-panel-link" style="margin-right: 10px;">Mod Panel</a>
+        {% endif %}
+        <form method="post" action="{% url 'logout' %}" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit">Logout</button>
+        </form>
+        {% else %}
+        <a href="{% url 'login' %}">Login</a> | <a href="{% url 'register' %}">Register</a>
+        {% endif %}
+    </div>
+
+    <div class="announcement-strip">
+        <div class="announcement-box">
+            <h3>Admin Announcements</h3>
+            <p>Admin message goes here</p>
+        </div>
+    </div>
+    <div class="content-wrapper">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="{% static 'js/notificationdropdown.js' %}"></script>
+
+</body>
+</html>

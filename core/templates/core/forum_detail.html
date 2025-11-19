@@ -1,0 +1,93 @@
+{% extends 'core/base.html' %}
+{% load static humanize %}
+
+{% block title %}{{ forum.title }} - The Internet Hub{% endblock %}
+
+{% block content %}
+<div class="content-box">
+    <h2>{{ forum.title }}</h2>
+    {% if forum.description %}
+    <p>{{ forum.description }}</p>
+    {% endif %}
+    <p>
+        {% if forum.parent %}
+        <a href="{% url 'forum_detail' forum_slug=forum.parent.slug %}">Back to {{ forum.parent.title }}</a> |
+        {% endif %}
+        <a href="{% url 'forums' %}">Forums Homepage</a>
+    </p>
+    {% if user.is_authenticated and not forum.is_locked %}
+    <p><a href="{% url 'create_forum_post' forum_slug=forum.slug %}">Create New Post</a></p>
+    {% endif %}
+
+    {% if sub_forums.exists %}
+    <div class="sub-forums-box" style="margin-bottom: 20px;">
+        <h3>Sub-Forums</h3>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #2a2a2a; color: #fff;">
+                    <th style="padding: 10px; text-align: left;">Sub-Forum</th>
+                    <th style="padding: 10px; text-align: left;">Description</th>
+                    <th style="padding: 10px; text-align: left;">Posts</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sub_forum in sub_forums %}
+                <tr style="border-bottom: 1px solid #444;">
+                    <td style="padding: 10px;">
+                        <a href="{% url 'forum_detail' forum_slug=sub_forum.slug %}">{{ sub_forum.title }}</a>
+                    </td>
+                    <td style="padding: 10px;">{{ sub_forum.description|truncatewords:30 }}</td>
+                    <td style="padding: 10px;">{{ sub_forum.posts.count }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+
+    <div class="posts-box">
+        <h3>Posts</h3>
+        {% if page_obj %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #2a2a2a; color: #fff;">
+                    <th style="padding: 10px; text-align: left;">Title</th>
+                    <th style="padding: 10px; text-align: left;">Posted By</th>
+                    <th style="padding: 10px; text-align: left;">Created</th>
+                    <th style="padding: 10px; text-align: left;">Last Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for post in page_obj %}
+                <tr style="border-bottom: 1px solid #444;">
+                    <td style="padding: 10px;">
+                        {% if post.is_pinned %}
+                        <strong>[Pinned]</strong>
+                        {% endif %}
+                        <a href="{% url 'forum_post_detail' forum_slug=forum.slug post_id=post.id %}">{{ post.title }}</a>
+                    </td>
+                    <td style="padding: 10px;">
+                        <a href="{% url 'user_profile' post.user.username %}">{{ post.user.username }}</a>
+                    </td>
+                    <td style="padding: 10px;">{{ post.created_at|naturaltime }}</td>
+                    <td style="padding: 10px;">{{ post.updated_at|naturaltime }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if page_obj.has_previous or page_obj.has_next %}
+        <div style="margin-top: 20px;">
+            {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+            {% endif %}
+            {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" style="margin-left: 10px;">Next</a>
+            {% endif %}
+        </div>
+        {% endif %}
+        {% else %}
+        <p>No posts in this forum.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

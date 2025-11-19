@@ -1,0 +1,12 @@
+{% extends 'core/base.html' %}
+{% block content %}
+    <h2>Moderation Panel</h2>
+    <h3>Hidden Posts</h3>
+    {% for post in hidden_posts %}
+        <p><a href="{% url 'post_detail' post.id %}">{{ post.title }}</a> by {{ post.user.username }} [{{ post.post_type }}]</p>
+    {% endfor %}
+    <h3>Hidden Comments</h3>
+    {% for comment in hidden_comments %}
+        <p><a href="{% url 'direct_comment' comment.id %}">{{ comment.content|truncatechars:50 }}</a> by {{ comment.user.username }} on <a href="{% url 'post_detail' comment.post.id %}">{{ comment.post.title }}</a></p>
+    {% endfor %}
+{% endblock %}

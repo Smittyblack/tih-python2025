@@ -1,0 +1,92 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Create Forum or Category - The Internet Hub{% endblock %}
+
+{% block content %}
+<div class="content-box">
+    <h2>Create Forum or Category</h2>
+    {% if error %}
+    <p style="color: red;">{{ error }}</p>
+    {% endif %}
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-bottom: 15px;">
+            <label for="title">Title:</label><br>
+            <input type="text" id="title" name="title" style="width: 100%; padding: 8px;" required>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label for="description">Description:</label><br>
+            <textarea id="description" name="description" style="width: 100%; height: 100px; padding: 8px;"></textarea>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label for="is_public">Public:</label>
+            <input type="checkbox" id="is_public" name="is_public" checked>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <label for="parent_type">Type:</label><br>
+            <select id="parent_type" name="parent_type" onchange="updateParentSelect()">
+                <option value="none">Category (Top-Level)</option>
+                <option value="category">Forum (Under Category)</option>
+                <option value="forum">Sub-Forum (Under Forum)</option>
+            </select>
+        </div>
+        <div style="margin-bottom: 15px;" id="parent_select_container">
+            <label for="parent_id">Parent:</label><br>
+            <select id="parent_id" name="parent_id">
+                <option value="">Select Parent (if applicable)</option>
+            </select>
+        </div>
+        <button type="submit" style="padding: 10px 20px; background-color: #007bff; color: white; border: none; cursor: pointer;">Create</button>
+    </form>
+    <p><a href="{% url 'forums' %}">Back to Forums</a></p>
+</div>
+
+<script>
+        // Pass categories and forums as JSON
+        const categories = [
+            {% for category in categories %}
+                { id: {{ category.id }}, name: "{{ category.name|escapejs }}" },
+            {% endfor %}
+        ];
+        const forums = [
+            {% for forum in forums %}
+                { id: {{ forum.id }}, title: "{{ forum.title|escapejs }}" },
+            {% endfor %}
+        ];
+
+        function updateParentSelect() {
+            const parentType = document.getElementById('parent_type').value;
+            const parentSelectContainer = document.getElementById('parent_select_container');
+            const parentSelect = document.getElementById('parent_id');
+
+            // Clear existing options
+            parentSelect.innerHTML = '<option value="">Select Parent (if applicable)</option>';
+
+            if (parentType === 'none') {
+                parentSelectContainer.style.display = 'none';
+                parentSelect.value = '';
+            } else {
+                parentSelectContainer.style.display = 'block';
+                if (parentType === 'category') {
+                    categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = `category_${category.id}`;
+                        option.textContent = `${category.name} (Category)`;
+                        parentSelect.appendChild(option);
+                    });
+                } else if (parentType === 'forum') {
+                    forums.forEach(forum => {
+                        const option = document.createElement('option');
+                        option.value = `forum_${forum.id}`;
+                        option.textContent = `${forum.title} (Forum)`;
+                        parentSelect.appendChild(option);
+                    });
+                }
+            }
+        }
+
+        // Initialize on page load
+        updateParentSelect();
+</script>
+{% endblock %}

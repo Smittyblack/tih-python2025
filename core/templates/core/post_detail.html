@@ -1,0 +1,218 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load content_filters %}
+{% load humanize %}
+
+{% block content %}
+    <div class="content-box">
+        {% if post.group %}
+            <p>Submitted by <a href="{% url 'user_profile' post.user.username %}">{{ post.user.username }}</a> on {{ post.created_at }} in <a href="{% url 'group_detail' post.group.id %}">{{ post.group.name }}</a></p>
+        {% else %}
+            <p>Submitted by <a href="{% url 'user_profile' post.user.username %}">{{ post.user.username }}</a> on {{ post.created_at }}</p>
+        {% endif %}
+        {% if post.post_type == 'image' %}
+            {% for attachment in post.images.all %}
+                <img src="{{ attachment.image.url }}" width="500" onerror="this.style.display='none';">
+            {% empty %}
+                <p>No images found for this post.</p>
+            {% endfor %}
+        {% elif post.post_type == 'audio' and post.file %}
+            <audio controls><source src="{{ post.file.url }}"></audio>
+        {% elif post.post_type == 'video' and post.file %}
+            <video controls width="500"><source src="{{ post.file.url }}"></video>
+        {% elif post.post_type == 'video' and post.video_url %}
+            {% if 'youtube.com' in post.video_url or 'youtu.be' in post.video_url %}
+                {% with video_id=post.video_url|split:'v='|last|split:'&'|first|default:post.video_url|split:'/'|last|split:'?'|first %}
+                    <div id="youtube-container-{{ post.id }}">
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/{{ video_id }}?enablejsapi=1" frameborder="0" allowfullscreen></iframe>
+                        <p style="display: none;" id="youtube-error-{{ post.id }}">This video cannot be embedded. Watch it on <a href="{{ post.video_url }}" target="_blank">YouTube</a>.</p>
+                    </div>
+                    <script>
+                        function checkYouTubeEmbed() {
+                            var iframe = document.querySelector('#youtube-container-{{ post.id }} iframe');
+                            var errorMsg = document.getElementById('youtube-error-{{ post.id }}');
+                            iframe.addEventListener('load', function() {
+                                try {
+                                    if (!iframe.contentWindow.document.body.innerHTML) {
+                                        iframe.style.display = 'none';
+                                        errorMsg.style.display = 'block';
+                                    }
+                                } catch (e) {
+                                    iframe.style.display = 'none';
+                                    errorMsg.style.display = 'block';
+                                    console.log('Embed error:', e);
+                                }
+                            });
+                            setTimeout(function() {
+                                if (!iframe.contentWindow.document.body.innerHTML) {
+                                    iframe.style.display = 'none';
+                                    errorMsg.style.display = 'block';
+                                }
+                            }, 3000); // Check after 3 seconds
+                        }
+                        window.addEventListener('load', checkYouTubeEmbed);
+                    </script>
+                {% endwith %}
+            {% else %}
+                <p>Invalid YouTube URL</p>
+            {% endif %}
+        {% elif post.post_type == 'text' %}
+            <div>{{ post.content|safe }}</div>
+        {% elif post.post_type == 'link' %}
+            <a href="{{ post.link }}">{{ post.link }}</a>
+            {% if post.content %}<p>{{ post.content|safe }}</p>{% endif %}
+        {% else %}
+            <p>Error: Invalid content type or file missing.</p>
+        {% endif %}
+        <p>Votes: {{ post.votes }}
+            {% if user.is_authenticated %}
+                <a href="{% url 'vote_post' post.id 'up' %}">↑</a>
+                <a href="{% url 'vote_post' post.id 'down' %}">↓</a>
+                {% if user == post.user or user.profile.group in 'moderator,admin' %}
+                    <a href="{% url 'hide_post' post.id %}">Delete</a>
+                    {% if user.profile.group == 'admin' %}
+                        <a href="{% url 'perm_delete_post' post.id %}">Permanent Delete</a>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        </p>
+        <button id="share-button">Share</button>
+        <div id="share-overlay" class="share-overlay">
+            <div class="share-content">
+                <h3>Share this Post</h3>
+                <div class="share-options">
+                    <a href="mailto:?body={{ request.scheme }}://{{ request.get_host }}{% url 'post_detail' post.id %}" target="_blank" class="share-option">
+                        <img src="{% static 'icons/share/emailicon.png' %}" alt="Email" class="share-icon">
+                        <span>Email</span>
+                    </a>
+                    <a href="https://www.reddit.com/submit?url={{ request.scheme }}://{{ request.get_host }}{% url 'post_detail' post.id %}" target="_blank" class="share-option">
+                        <img src="{% static 'icons/share/redditicon.png' %}" alt="Reddit" class="share-icon">
+                        <span>Reddit</span>
+                    </a>
+                    <a href="https://x.com/intent/post?url={{ request.scheme }}://{{ request.get_host }}{% url 'post_detail' post.id %}" target="_blank" class="share-option">
+                        <img src="{% static 'icons/share/xicon.png' %}" alt="X" class="share-icon">
+                        <span>X</span>
+                    </a>
+                    <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.scheme }}://{{ request.get_host }}{% url 'post_detail' post.id %}" target="_blank" class="share-option">
+                        <img src="{% static 'icons/share/facebookicon.png' %}" alt="Facebook" class="share-icon">
+                        <span>Facebook</span>
+                    </a>
+                    <a href="https://pinterest.com/pin/create/button/?url={{ request.scheme }}://{{ request.get_host }}{% url 'post_detail' post.id }}" target="_blank" class="share-option">
+                        <img src="{% static 'icons/share/pinteresticon.png' %}" alt="Pinterest" class="share-icon">
+                        <span>Pinterest</span>
+                    </a>
+                    <a href="https://www.tumblr.com/widgets/share/tool?posttype=link&canonicalUrl={{ request.scheme }}://{{ request.get_host }}{% url 'post_detail' post.id %}" target="_blank" class="share-option">
+                        <img src="{% static 'icons/share/tumblr.png' %}" alt="Tumblr" class="share-icon">
+                        <span>Tumblr</span>
+                    </a>
+                    <a href="https://api.whatsapp.com/send?text={{ request.scheme }}://{{ request.get_host }}{% url 'post_detail' post.id %}" target="_blank" class="share-option">
+                        <img src="{% static 'icons/share/whatsapp.png' %}" alt="WhatsApp" class="share-icon">
+                        <span>WhatsApp</span>
+                    </a>
+                    <a href="https://t.me/share/url?url={{ request.scheme }}://{{ request.get_host }}{% url 'post_detail' post.id %}" target="_blank" class="share-option">
+                        <img src="{% static 'icons/share/telegram.png' %}" alt="Telegram" class="share-icon">
+                        <span>Telegram</span>
+                    </a>
+                    <a href="https://line.me/R/msg/text/?{{ request.scheme }}://{{ request.get_host }}{% url 'post_detail' post.id %}" target="_blank" class="share-option">
+                        <img src="{% static 'icons/share/line.png' %}" alt="Line" class="share-icon">
+                        <span>Line</span>
+                    </a>
+                    <a href="https://vk.com/share.php?url={{ request.scheme }}://{{ request.get_host }}{% url 'post_detail' post.id %}" target="_blank" class="share-option">
+                        <img src="{% static 'icons/share/vk.png' %}" alt="ВКонтакте" class="share-icon">
+                        <span>ВКонтакте</span>
+                    </a>
+                    <a href="https://connect.ok.ru/offer?url={{ request.scheme }}://{{ request.get_host }}{% url 'post_detail' post.id %}" target="_blank" class="share-option">
+                        <img src="{% static 'icons/share/okru.png' %}" alt="OK.RU" class="share-icon">
+                        <span>OK.RU</span>
+                    </a>
+                </div>
+                <button id="close-share">Close</button>
+            </div>
+        </div>
+        <h3>Comments</h3>
+        {% for comment in top_level_comments %}
+            {% include 'core/comment_tree.html' with comment=comment level=0 %}
+        {% endfor %}
+        {% if user.is_authenticated %}
+            <form method="post">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit">Comment</button>
+            </form>
+        {% endif %}
+    </div>
+
+    <style>
+        .share-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+        }
+        .share-content {
+            background: #444;
+            padding: 20px;
+            max-width: 600px;
+            margin: 50px auto;
+            text-align: center;
+            position: relative;
+            border: 1px solid #00FF00;
+        }
+        .share-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .share-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #00FF00;
+            width: 80px;
+        }
+        .share-icon {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 5px;
+        }
+        .share-option span {
+            font-size: 12px;
+        }
+        #share-button, #close-share {
+            background: #00FF00;
+            color: #000;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        #share-button:hover, #close-share:hover {
+            background: #009900;
+            color: #fff;
+        }
+    </style>
+
+    <script>
+        document.getElementById('share-button').addEventListener('click', function() {
+            document.getElementById('share-overlay').style.display = 'block';
+        });
+
+        document.getElementById('close-share').addEventListener('click', function() {
+            document.getElementById('share-overlay').style.display = 'none';
+        });
+
+        document.querySelectorAll('.share-option').forEach(option => {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = this.href;
+                window.open(url, '_blank', 'width=600,height=400');
+            });
+        });
+    </script>
+{% endblock %}

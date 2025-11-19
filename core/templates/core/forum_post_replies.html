@@ -1,0 +1,51 @@
+{% extends 'core/base.html' %}
+{% load static humanize %}
+
+{% block title %}{{ post.title }} - Replies - {{ forum.title }} - The Internet Hub{% endblock %}
+
+{% block content %}
+<div class="content-box">
+    <h2>{{ post.title }}</h2>
+    <p>
+        <a href="{% url 'forum_post_replies' forum_slug=forum.slug post_id=post.id %}">#{{ post.id }}</a>
+        by <a href="{% url 'user_profile' post.user.username %}">{{ post.user.username }}</a>
+        on {{ post.created_at|naturaltime }}
+        {% if post.created_at != post.updated_at %}
+        (last updated {{ post.updated_at|naturaltime }})
+        {% endif %}
+    </p>
+    {% if post.is_pinned %}
+    <p><strong>[Pinned]</strong></p>
+    {% endif %}
+    <div style="margin-bottom: 20px;">
+        {{ post.content|safe }}
+    </div>
+    <p>
+        <a href="{% url 'forum_post_detail' forum_slug=forum.slug post_id=post.id %}">View in thread</a> |
+        <a href="{% url 'forum_detail' forum_slug=forum.slug %}">Back to {{ forum.title }}</a> |
+        <a href="{% url 'forums' %}">All Forums</a>
+    </p>
+
+    <h3>Replies</h3>
+    {% for reply in replies %}
+    <div style="margin-bottom: 20px; border-bottom: 1px solid #444; padding-bottom: 10px;">
+        <p>
+            <a href="{% url 'forum_post_replies' forum_slug=forum.slug post_id=reply.id %}">
+                #{{ reply.id }}{% if reply.parent %} replying to #{{ reply.parent.id }}{% endif %}
+            </a>
+            by <a href="{% url 'user_profile' reply.user.username %}">{{ reply.user.username }}</a>
+            on {{ reply.created_at|naturaltime }}
+        </p>
+        {% if reply.parent %}
+        <div style="margin-bottom: 10px; border-left: 3px solid #444; padding-left: 10px;">
+            <p><strong>{{ reply.parent.user.username }}</strong> wrote:</p>
+            <p>{{ reply.parent.content|truncatewords:50|safe }}</p>
+        </div>
+        {% endif %}
+        <div>{{ reply.content|safe }}</div>
+    </div>
+    {% empty %}
+    <p>No replies to this post.</p>
+    {% endfor %}
+</div>
+{% endblock %}

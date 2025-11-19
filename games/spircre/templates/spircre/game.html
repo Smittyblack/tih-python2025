@@ -1,0 +1,266 @@
+{% extends 'content/base.html' %}
+{% load static spircre_tags %}
+
+{% block content %}
+    <div class="game-container">
+        <!-- Skill Tabs (Vertical) -->
+        <div class="skill-tabs">
+            <h3>Skills</h3>
+            <ul>
+                {% for skill, level in levels.items %}
+                    <li>
+                        <button class="tab-btn" data-skill="{{ skill }}">{{ skill|capfirst }} ({{ level }})</button>
+                    </li>
+                {% endfor %}
+                <li><button class="tab-btn" data-skill="combat">Combat</button></li>
+            </ul>
+        </div>
+
+        <!-- Skill Content Area -->
+        <div class="skill-content" id="skill-content">
+            <h2 id="skill-title">Select a Skill</h2>
+            <div id="skill-info">
+                <!-- Level, XP, and progress bar will be populated here via JS -->
+            </div>
+            <div id="actions"></div>
+            <div id="progress-bar-container" style="display: none;">
+                <div id="progress-bar"></div>
+            </div>
+            <div id="inventory">
+                <h4>Inventory</h4>
+                <ul id="inventory-list"></ul>
+            </div>
+        </div>
+
+        <!-- High Scores -->
+        <div id="high-scores">
+            <h3>Top Scores</h3>
+            <ul id="score-list"></ul>
+        </div>
+    </div>
+
+    {{ levels|json_script:"levels" }}
+    {{ progress_xp|json_script:"progress" }}
+
+    <script>
+        const skillData = {
+            woodcutting: [
+                { name: "Normal Tree", level: 1, time: 3, xp: 10, reward: { logs: 1 } },
+                { name: "Oak Tree", level: 10, time: 4, xp: 15, reward: { oak_logs: 1 } }
+            ],
+        };
+
+        let currentAction = null;
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const skill = btn.getAttribute('data-skill');
+                loadSkillPage(skill);
+            });
+        });
+
+        function loadSkillPage(skill) {
+            const content = document.getElementById('skill-content');
+            document.getElementById('skill-title').textContent = skill.charAt(0).toUpperCase() + skill.slice(1);
+            const skillInfo = document.getElementById('skill-info');
+            const actionsDiv = document.getElementById('actions');
+            actionsDiv.innerHTML = '';
+
+            document.getElementById('progress-bar-container').style.display = 'none';
+            currentAction = null;
+
+            if (skill === 'combat') {
+                actionsDiv.innerHTML = '<p>Combat interface coming soon!</p>';
+                return;
+            }
+
+            const levels = JSON.parse(document.getElementById('levels').textContent);
+            const progressXp = JSON.parse(document.getElementById('progress').textContent);
+            const skillLevel = levels[skill];
+            const skillXp = progressXp[skill];
+            const progressPercent = (skillXp / (skillLevel === 1 ? 100 : 100 * (2 ** (skillLevel - 1)))) * 100;
+
+            // Populate skill info
+            skillInfo.innerHTML = `
+                <p>Level: ${skillLevel}</p>
+                <p>XP: ${skillXp}</p>
+                <div class="skill-progress-bar-container">
+                    <div class="skill-progress-bar" style="width: ${progressPercent}%"></div>
+                </div>
+            `;
+
+            skillData[skill]?.forEach(action => {
+                if (skillLevel >= action.level) {
+                    const btn = document.createElement('button');
+                    btn.textContent = `${action.name} (${action.time}s, ${action.xp} XP)`;
+                    btn.addEventListener('click', () => startAction(skill, action));
+                    actionsDiv.appendChild(btn);
+                }
+            });
+        }
+
+        function startAction(skill, action) {
+            if (currentAction) return;
+            currentAction = action;
+
+            const progressBar = document.getElementById('progress-bar');
+            const container = document.getElementById('progress-bar-container');
+            container.style.display = 'block';
+            progressBar.style.width = '0%';
+
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 100 / (action.time * 10);
+                progressBar.style.width = `${progress}%`;
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    completeAction(skill, action);
+                }
+            }, 100);
+
+            progressBar.style.transition = 'width 0.1s linear';
+        }
+
+        function completeAction(skill, action) {
+            fetch('/games/spircre/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: `action=train&skill=${skill}&xp=${action.xp}&reward=${encodeURIComponent(JSON.stringify(action.reward))}`
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response from server:', data);
+                const skillInfo = document.getElementById('skill-info');
+                skillInfo.innerHTML = `
+                    <p>Level: ${data.level}</p>
+                    <p>XP: ${data.xp}</p>
+                    <div class="skill-progress-bar-container">
+                        <div class="skill-progress-bar" style="width: ${data.progress}%"></div>
+                    </div>
+                `;
+                // Update sidebar level
+                document.querySelector(`[data-skill="${skill}"]`).textContent = `${skill.charAt(0).toUpperCase() + skill.slice(1)} (${data.level})`;
+                updateInventory(action.reward);
+                loadHighScores();
+            })
+            .catch(error => {
+                console.error('Error during fetch:', error);
+            })
+            .finally(() => {
+                document.getElementById('progress-bar-container').style.display = 'none';
+                currentAction = null;
+            });
+        }
+
+        function updateInventory(reward) {
+            const inventoryList = document.getElementById('inventory-list');
+            for (const [item, qty] of Object.entries(reward)) {
+                let li = inventoryList.querySelector(`[data-item="${item}"]`);
+                if (!li) {
+                    li = document.createElement('li');
+                    li.setAttribute('data-item', item);
+                    inventoryList.appendChild(li);
+                }
+                const currentQty = parseInt(li.textContent.split(': ')[1] || 0) || 0;
+                li.textContent = `${item}: ${currentQty + qty}`;
+            }
+        }
+
+        function loadHighScores() {
+            fetch('/games/spircre/high_scores/')
+                .then(response => response.json())
+                .then(data => {
+                    const scoreList = document.getElementById('score-list');
+                    scoreList.innerHTML = '';
+                    data.high_scores.forEach(item => {
+                        const li = document.createElement('li');
+                        li.textContent = `${item.username}: ${item.score}`;
+                        scoreList.appendChild(li);
+                    });
+                });
+        }
+
+        function loadInventory() {
+            fetch('/games/spircre/inventory/')
+                .then(response => response.json())
+                .then(data => {
+                    const inventoryList = document.getElementById('inventory-list');
+                    inventoryList.innerHTML = '';
+                    data.inventory.forEach(item => {
+                        const li = document.createElement('li');
+                        li.setAttribute('data-item', item.item_name);
+                        li.textContent = `${item.item_name}: ${item.quantity}`;
+                        inventoryList.appendChild(li);
+                    });
+                });
+        }
+
+        window.onload = () => {
+            loadHighScores();
+            loadInventory();
+        };
+    </script>
+
+    <style>
+        .game-container {
+            display: flex;
+            gap: 20px;
+        }
+        .skill-tabs {
+            width: 200px;
+        }
+        .skill-tabs ul {
+            list-style: none;
+            padding: 0;
+        }
+        .tab-btn {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 5px;
+            background-color: #00FF00;
+            border: none;
+            cursor: pointer;
+        }
+        .tab-btn:hover {
+            background-color: #009900;
+        }
+        .skill-content {
+            flex-grow: 1;
+        }
+        #actions button {
+            margin: 5px;
+            padding: 10px;
+            background-color: #00FF00;
+            border: none;
+            cursor: pointer;
+        }
+        #progress-bar-container {
+            width: 100%;
+            height: 20px;
+            background-color: #ccc;
+            margin-top: 10px;
+        }
+        #progress-bar {
+            height: 100%;
+            background-color: #00FF00;
+            width: 0;
+        }
+        .skill-progress-bar-container {
+            width: 100%;
+            height: 10px;
+            background-color: #ccc;
+            margin-top: 5px;
+        }
+        .skill-progress-bar {
+            height: 100%;
+            background-color: #00FF00;
+            transition: width 0.3s ease;
+        }
+    </style>
+{% endblock %}

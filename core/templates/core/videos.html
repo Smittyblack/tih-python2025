@@ -1,0 +1,118 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="content-container">
+        <div class="content-header">
+            <h3>All Videos</h3>
+            <select onchange="location = this.value;">
+                <option value="?sort=day" {% if sort_by == 'day' %}selected{% endif %}>Day</option>
+                <option value="?sort=week" {% if sort_by == 'week' %}selected{% endif %}>Week</option>
+                <option value="?sort=month" {% if sort_by == 'month' %}selected{% endif %}>Month</option>
+                <option value="?sort=year" {% if sort_by == 'year' %}selected{% endif %}>Year</option>
+                <option value="?sort=all" {% if sort_by == 'all' %}selected{% endif %}>All-Time</option>
+            </select>
+        </div>
+        <div class="content-grid">
+            {% for post in page_obj %}
+                <div class="post-item">
+                    <a href="{% url 'post_detail' post.id %}">
+                        {% if post.thumbnail %}
+                            <img src="{{ post.thumbnail.url }}" alt="{{ post.title }}">
+                        {% else %}
+                            <img src="{% static 'icons/videothumbnail.png' %}" alt="Default Thumbnail">
+                        {% endif %}
+                    </a>
+                    <p class="post-title">{{ post.title|truncatechars:30 }}</p>
+                    <small class="post-author">by {{ post.user.username }}</small>
+                </div>
+            {% empty %}
+                <p>No videos found.</p>
+            {% endfor %}
+        </div>
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}&sort={{ sort_by }}" class="page-link">Previous</a>
+            {% endif %}
+            <span class="page-current">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&sort={{ sort_by }}" class="page-link">Next</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <style>
+        .content-container {
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #00ff00;
+        }
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+            gap: 10px;
+            justify-content: center;
+        }
+        .post-item {
+            width: 215px;
+            height: 205px;
+            background-color: #333333;
+            text-align: center;
+            overflow: hidden;
+        }
+        .post-item img {
+            width: 215px;
+            height: 135px;
+            object-fit: cover;
+        }
+        .post-title {
+            font-size: 14px;
+            margin: 5px 0;
+            color: #00ff00;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .post-author {
+            font-size: 12px;
+            color: #666;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .pagination {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .page-link {
+            display: inline-block;
+            padding: 5px 10px;
+            margin: 0 5px;
+            background-color: #00ff00;
+            color: #000000;
+            text-decoration: none;
+            border: 1px solid #009900;
+        }
+        .page-link:hover {
+            background-color: #009900;
+            color: #ffffff;
+        }
+        .page-current {
+            margin: 0 10px;
+            color: #00ff00;
+        }
+        select {
+            background-color: #555;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 5px;
+        }
+    </style>
+{% endblock %}

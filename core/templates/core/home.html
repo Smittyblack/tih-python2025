@@ -1,0 +1,289 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="home-container">
+        <!-- Sidebar (Left Side) -->
+        <div class="sidebar">
+            <!-- TIH News Box -->
+            <div class="sidebar-box">
+                <h3>TIH News</h3>
+                <div class="news-content">
+                    {% for admin_post in admin_posts %}
+                        <div class="news-item">
+                            <p>{{ admin_post.title }}</p>
+                            <small>Posted by: Admin - {{ admin_post.created_at|timesince }} ago</small>
+                        </div>
+                    {% empty %}
+                        <p>No admin news yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Google Ads Box -->
+            <div class="sidebar-box">
+                <h3>Google Ads</h3>
+                <div class="ads-content">
+                    <p>[Placeholder for Google Ad Space]</p>
+                </div>
+            </div>
+
+            <!-- User News Box -->
+            <div class="sidebar-box">
+                <h3>User News</h3>
+                <div class="news-content">
+                    {% for profile_post in user_posts %}
+                        <div class="news-item">
+                            <p>{{ profile_post.title|truncatechars:50 }}</p>
+                            <small>Posted by: {{ profile_post.user.username }} - {{ profile_post.created_at|timesince }} ago</small>
+                        </div>
+                    {% empty %}
+                        <p>No user blog posts yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content (Right Side) -->
+        <div class="main-content">
+            <!-- Top Images Box -->
+            <div class="content-box">
+                <div class="content-header">
+                    <h3>Top Images</h3>
+                    <select onchange="location = this.value;">
+                        <option value="?sort=day" {% if sort_by == 'day' %}selected{% endif %}>Day</option>
+                        <option value="?sort=week" {% if sort_by == 'week' %}selected{% endif %}>Week</option>
+                        <option value="?sort=month" {% if sort_by == 'month' %}selected{% endif %}>Month</option>
+                        <option value="?sort=year" {% if sort_by == 'year' %}selected{% endif %}>Year</option>
+                        <option value="?sort=all" {% if sort_by == 'all' %}selected{% endif %}>All-Time</option>
+                    </select>
+                </div>
+                <div class="content-grid">
+                    {% for post in image_posts %}
+                        <div class="post-item">
+                            <a href="{% url 'post_detail' post.id %}">
+                                {% if post.thumbnail %}
+                                    <img src="{{ post.thumbnail.url }}" alt="{{ post.title }}">
+                                {% else %}
+                                    <img src="{% static 'icons/imagethumbnail.png' %}" alt="Default Thumbnail">
+                                {% endif %}
+                            </a>
+                            <p class="post-title">{{ post.title|truncatechars:30 }}</p>
+                            <small class="post-author">by {{ post.user.username }}</small>
+                        </div>
+                    {% empty %}
+                        <p>No top images yet.</p>
+                    {% endfor %}
+                </div>
+                <div class="see-more">
+                    <a href="{% url 'images' %}?sort={{ sort_by }}" class="see-more-btn">See More</a>
+                </div>
+            </div>
+
+            <!-- Top Videos Box -->
+            <div class="content-box">
+                <div class="content-header">
+                    <h3>Top Videos</h3>
+                    <select onchange="location = this.value;">
+                        <option value="?sort=day" {% if sort_by == 'day' %}selected{% endif %}>Day</option>
+                        <option value="?sort=week" {% if sort_by == 'week' %}selected{% endif %}>Week</option>
+                        <option value="?sort=month" {% if sort_by == 'month' %}selected{% endif %}>Month</option>
+                        <option value="?sort=year" {% if sort_by == 'year' %}selected{% endif %}>Year</option>
+                        <option value="?sort=all" {% if sort_by == 'all' %}selected{% endif %}>All-Time</option>
+                    </select>
+                </div>
+                <div class="content-grid">
+                    {% for post in video_posts %}
+                        <div class="post-item">
+                            <a href="{% url 'post_detail' post.id %}">
+                               {% if post.thumbnail %}
+                                  <img src="{{ post.thumbnail.url }}" alt="{{ post.title }}">
+                               {% else %}
+                                  <img src="{% static 'icons/videothumbnail.png' %}" alt="Default Thumbnail">
+                               {% endif %}
+                            </a>
+                            <p class="post-title">{{ post.title|truncatechars:30 }}</p>
+                            <small class="post-author">by {{ post.user.username }}</small>
+                        </div>
+                    {% empty %}
+                        <p>No top videos yet.</p>
+                    {% endfor %}
+                </div>
+                <div class="see-more">
+                    <a href="{% url 'videos' %}?sort={{ sort_by }}" class="see-more-btn">See More</a>
+                </div>
+            </div>
+
+            <!-- Top Audio Box -->
+            <div class="content-box">
+                <div class="content-header">
+                    <h3>Top Audio</h3>
+                    <select onchange="location = this.value;">
+                        <option value="?sort=day" {% if sort_by == 'day' %}selected{% endif %}>Day</option>
+                        <option value="?sort=week" {% if sort_by == 'week' %}selected{% endif %}>Week</option>
+                        <option value="?sort=month" {% if sort_by == 'month' %}selected{% endif %}>Month</option>
+                        <option value="?sort=year" {% if sort_by == 'year' %}selected{% endif %}>Year</option>
+                        <option value="?sort=all" {% if sort_by == 'all' %}selected{% endif %}>All-Time</option>
+                    </select>
+                </div>
+                <div class="content-grid">
+                    {% for post in audio_posts %}
+                        <div class="post-item">
+                            <a href="{% url 'post_detail' post.id %}">
+                                {% if post.thumbnail %}
+                                    <img src="{{ post.thumbnail.url }}" alt="{{ post.title }}">
+                                {% else %}
+                                    <img src="{% static 'icons/audiothumbnail.png' %}" alt="Default Thumbnail">
+                                {% endif %}
+                            </a>
+                            <p class="post-title">{{ post.title|truncatechars:30 }}</p>
+                            <small class="post-author">by {{ post.user.username }}</small>
+                        </div>
+                    {% empty %}
+                        <p>No top audio yet.</p>
+                    {% endfor %}
+                </div>
+                <div class="see-more">
+                    <a href="{% url 'audio' %}?sort={{ sort_by }}" class="see-more-btn">See More</a>
+                </div>
+            </div>
+
+            <!-- Top Text & Links Box -->
+            <div class="content-box">
+                <div class="content-header">
+                    <h3>Top Text & Links</h3>
+                    <select onchange="location = this.value;">
+                        <option value="?sort=day" {% if sort_by == 'day' %}selected{% endif %}>Day</option>
+                        <option value="?sort=week" {% if sort_by == 'week' %}selected{% endif %}>Week</option>
+                        <option value="?sort=month" {% if sort_by == 'month' %}selected{% endif %}>Month</option>
+                        <option value="?sort=year" {% if sort_by == 'year' %}selected{% endif %}>Year</option>
+                        <option value="?sort=all" {% if sort_by == 'all' %}selected{% endif %}>All-Time</option>
+                    </select>
+                </div>
+                <div class="content-grid">
+                    {% for post in text_link_posts %}
+                        <div class="post-item">
+                            <a href="{% url 'post_detail' post.id %}">
+                                {% if post.thumbnail %}
+                                    <img src="{{ post.thumbnail.url }}" alt="{{ post.title }}">
+                                {% elif post.post_type == 'link' %}
+                                    <img src="{% static 'icons/linkthumbnail.jpg' %}" alt="Default Thumbnail">
+                                {% else %}
+                                    <img src="{% static 'icons/textthumbnail.png' %}" alt="Default Thumbnail">
+                                {% endif %}
+                            </a>
+                            <p class="post-title">{{ post.title|truncatechars:30 }}</p>
+                            <small class="post-author">by {{ post.user.username }}</small>
+                        </div>
+                    {% empty %}
+                        <p>No top text or links yet.</p>
+                    {% endfor %}
+                </div>
+                <div class="see-more">
+                    <a href="{% url 'text_links' %}?sort={{ sort_by }}" class="see-more-btn">See More</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .home-container {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #00ff00;
+        }
+        .sidebar {
+            width: 18%;
+            background-color: #2a2a2a;
+            padding: 10px;
+            border: 1px solid #00ff00;
+        }
+        .sidebar-box {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #00ff00;
+        }
+        .news-content, .ads-content {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .news-item {
+            margin-bottom: 10px;
+        }
+        .main-content {
+            width: 80%;
+            padding: 10px;
+            border: 1px solid #00ff00;
+        }
+        .content-box {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #2a2a2a; /* Darker background for content boxes */
+            border: 1px solid #00ff00;
+            min-height: 645px; /* Approximate height for 3 rows of 205px + 2 gaps of 10px + padding */
+        }
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 215px); /* 4 columns */
+            grid-template-rows: repeat(3, 205px); /* 3 rows */
+            gap: 10px;
+            justify-content: center;
+        }
+        .post-item {
+            width: 215px;
+            height: 205px;
+            background-color: #333333; /* Lighter background for post items */
+            text-align: center;
+            overflow: hidden;
+        }
+        .post-item img {
+            width: 215px;
+            height: 135px;
+            object-fit: cover;
+        }
+        .post-title {
+            font-size: 14px;
+            margin: 5px 0;
+            color: #00ff00;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .post-author {
+            font-size: 12px;
+            color: #666;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .see-more {
+            text-align: center;
+            margin-top: 10px;
+        }
+        .see-more-btn {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: #00ff00;
+            color: #000000;
+            text-decoration: none;
+            border: 1px solid #009900;
+        }
+        .see-more-btn:hover {
+            background-color: #009900;
+            color: #ffffff;
+        }
+        select {
+            background-color: #555;
+            color: #00ff00;
+            border: 1px solid #00ff00;
+            padding: 5px;
+        }
+    </style>
+{% endblock %}

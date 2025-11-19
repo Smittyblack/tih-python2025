@@ -1,0 +1,78 @@
+{% extends 'core/base.html' %}
+{% load static humanize %}
+
+{% block title %}{{ post.title }} - {{ forum.title }} - The Internet Hub{% endblock %}
+
+{% block content %}
+<div class="content-box">
+    <h2><a href="{% url 'forum_detail' forum_slug=forum.slug %}">{{ forum.title }}</a> &gt; {{ post.title }}</h2>
+    <p><a href="{% url 'forums' %}">All Forums</a></p>
+
+    <!-- Main Post -->
+    <div class="post-box" style="margin-bottom: 20px; padding: 15px; background-color: #1a1a1a; border: 1px solid #444; display: flex;">
+        <!-- Left 75%: Post Content -->
+        <div style="flex: 3; padding-right: 15px;">
+            <h3>{{ post.title }}</h3>
+            <p>
+                Posted on {{ post.created_at|naturaltime }}
+                {% if post.updated_at != post.created_at %}
+                (Updated {{ post.updated_at|naturaltime }})
+                {% endif %}
+            </p>
+            <div style="margin-bottom: 10px;">
+                {{ post.content|linebreaks }}
+            </div>
+            {% if user.is_authenticated and not forum.is_locked %}
+            <p><a href="{% url 'create_forum_post' forum_slug=forum.slug %}?parent_id={{ post.id }}">Reply to this post</a></p>
+            {% endif %}
+        </div>
+        <!-- Right 25%: User Info -->
+        <div style="flex: 1; text-align: center; background-color: #222; padding: 10px; border-left: 1px solid #444;">
+            <p><a href="{% url 'user_profile' post.user.username %}">{{ post.user.username }}</a></p>
+            {% if post.user.profile.photo %}
+            <img src="{{ post.user.profile.photo.url }}" alt="{{ post.user.username }}'s profile photo" style="width: 100px; height: 100px; object-fit: cover; border-radius: 5px; margin-bottom: 10px;">
+            {% else %}
+            <img src="{% static 'images/default_profile.png' %}" alt="Default profile photo" style="width: 100px; height: 100px; object-fit: cover; border-radius: 5px; margin-bottom: 10px;">
+            {% endif %}
+            <p>Posts: {{ post.user.forumpost_set.count }}</p>
+        </div>
+    </div>
+
+    <!-- Replies -->
+    <h3>Replies</h3>
+    {% if replies %}
+    {% for reply in replies %}
+    <div class="post-box" style="margin-bottom: 20px; padding: 15px; background-color: #1a1a1a; border: 1px solid #444; display: flex;">
+        <!-- Left 75%: Reply Content -->
+        <div style="flex: 3; padding-right: 15px;">
+            <h3>{{ reply.title }}</h3>
+            <p>
+                Posted on {{ reply.created_at|naturaltime }}
+                {% if reply.updated_at != reply.created_at %}
+                (Updated {{ reply.updated_at|naturaltime }})
+                {% endif %}
+            </p>
+            <div style="margin-bottom: 10px;">
+                {{ reply.content|linebreaks }}
+            </div>
+            {% if user.is_authenticated and not forum.is_locked %}
+            <p><a href="{% url 'create_forum_post' forum_slug=forum.slug %}?parent_id={{ post.id }}">Reply to this post</a></p>
+            {% endif %}
+        </div>
+        <!-- Right 25%: User Info -->
+        <div style="flex: 1; text-align: center; background-color: #222; padding: 10px; border-left: 1px solid #444;">
+            <p><a href="{% url 'user_profile' reply.user.username %}">{{ reply.user.username }}</a></p>
+            {% if reply.user.profile.photo %}
+            <img src="{{ reply.user.profile.photo.url }}" alt="{{ reply.user.username }}'s profile photo" style="width: 100px; height: 100px; object-fit: cover; border-radius: 5px; margin-bottom: 10px;">
+            {% else %}
+            <img src="{% static 'images/default_profile.png' %}" alt="Default profile photo" style="width: 100px; height: 100px; object-fit: cover; border-radius: 5px; margin-bottom: 10px;">
+            {% endif %}
+            <p>Posts: {{ reply.user.forumpost_set.count }}</p>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p>No replies yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

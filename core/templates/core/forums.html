@@ -1,0 +1,54 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Forums - The Internet Hub{% endblock %}
+
+{% block content %}
+<div class="content-box">
+    <h2>Forums</h2>
+    {% if user.is_authenticated and user.profile.group == 'admin' %}
+    <p><a href="{% url 'create_forum' %}">Create New Forum or Category</a></p>
+    {% endif %}
+    {% for category in categories %}
+    {% if category.is_public or user.is_authenticated and user.profile.group == 'admin' %}
+    <div class="category-box" style="margin-bottom: 20px;">
+        <h3>{{ category.name }}{% if not category.is_public %} (Private){% endif %}</h3>
+        {% if category.description %}
+        <p>{{ category.description }}</p>
+        {% endif %}
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #2a2a2a; color: #fff;">
+                    <th style="padding: 10px; text-align: left;">Forum</th>
+                    <th style="padding: 10px; text-align: left;">Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for forum in category.filtered_forums %}
+                <tr style="border-bottom: 1px solid #444;">
+                    <td style="padding: 10px;">
+                        <a href="{% url 'forum_detail' forum_slug=forum.slug %}">{{ forum.title }}{% if not forum.is_public %} (Private){% endif %}</a>
+                        {% if forum.filtered_sub_forums.exists %}
+                        <ul style="margin-top: 5px; padding-left: 20px;">
+                            {% for sub_forum in forum.filtered_sub_forums %}
+                            <li><a href="{% url 'forum_detail' forum_slug=sub_forum.slug %}">{{ sub_forum.title }}{% if not sub_forum.is_public %} (Private){% endif %}</a></li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 10px;">{{ forum.description|truncatewords:30 }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2" style="padding: 10px;">No forums in this category.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    {% empty %}
+    <p>No categories available.</p>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends 'core/base.html' %}
+{% block content %}
+    <h2>Groups</h2>
+    <a href="{% url 'group_create' %}">Create Group</a>
+    <ul>
+    {% for group in groups %}
+        <li><a href="{% url 'group_detail' group.id %}">{{ group.name }}</a> - {{ group.description }}</li>
+    {% empty %}
+        <li>No groups yet.</li>
+    {% endfor %}
+    </ul>
+{% endblock %}

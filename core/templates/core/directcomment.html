@@ -1,0 +1,22 @@
+{% extends 'core/base.html' %}
+{% load humanize %}
+{% block content %}
+    <div class="content-box">
+        <p><a href="{% url 'post_detail' comment.post.id %}">Go to Full Post</a></p>
+        {% if comment.parent %}
+            <p><a href="{% url 'direct_comment' comment.parent.id %}">Show Parent Comment</a></p>
+        {% endif %}
+        {% include 'core/comment_tree.html' with comment=comment level=0 %}
+        <h3>Replies</h3>
+        {% for reply in comment.replies.all %}
+            {% include 'core/comment_tree.html' with comment=reply level=1 %}
+        {% endfor %}
+        {% if user.is_authenticated %}
+            <form method="post" action="{% url 'reply_comment' comment.id %}">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit">Reply</button>
+            </form>
+        {% endif %}
+    </div>
+{% endblock %}

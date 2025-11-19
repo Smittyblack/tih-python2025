@@ -1,0 +1,56 @@
+{% load humanize %}
+{% load comment_filters %}
+<div style="margin-left: {{ level|multiply:20 }}px;">
+    <p>
+        #{{ comment.number }}
+        <a href="{% url 'user_profile' comment.user.username %}">{{ comment.user.username }}</a>
+        {% if comment.is_hidden and user.profile.group in 'moderator,admin' %}
+            <span style="color: red;">(removed)</span>
+        {% endif %}
+        ({{ comment.created_at|naturaltime|default:comment.created_at }}):
+        {% if comment.is_hidden %}
+            {% if user.profile.group in 'moderator,admin' %}
+                <span style="color: red;">{{ comment.content|safe }}</span>
+            {% else %}
+                <i>Comment removed.</i>
+            {% endif %}
+        {% else %}
+            {{ comment.content|safe }}
+        {% endif %}
+        [Votes: {{ comment.votes }}
+        {% if user.is_authenticated %}
+            <a href="{% url 'vote_comment' comment.id 'up' %}">↑</a>
+            <a href="{% url 'vote_comment' comment.id 'down' %}">↓</a>
+            {% if user == comment.user or user.profile.group in 'moderator,admin' %}
+                <a href="{% url 'hide_comment' comment.id %}" class="delete-btn">Delete</a>
+                {% if user.profile.group == 'admin' %}
+                    <a href="{% url 'perm_delete_comment' comment.id %}" class="perm-delete-btn">Permanent Delete</a>
+                {% endif %}
+            {% endif %}
+            <button class="reply-btn" onclick="toggleReplyForm('reply-form-{{ comment.id }}')">Reply</button>
+        {% endif %}
+        ]
+        <a href="{% url 'direct_comment' comment.id %}" class="direct-link">Direct Link</a>
+    </p>
+    {% if user.is_authenticated %}
+        <form id="reply-form-{{ comment.id }}" method="post" action="{% url 'reply_comment' comment.id %}" style="display: none;" class="reply-form">
+            {% csrf_token %}
+            <textarea name="content" required class="reply-textarea"></textarea>
+            <button type="submit" class="submit-reply-btn">Submit Reply</button>
+        </form>
+    {% endif %}
+    {% for reply in comment.replies.all %}
+        {% include 'core/comment_tree.html' with comment=reply level=level|add:1 %}
+    {% endfor %}
+</div>
+
+<script>
+    function toggleReplyForm(formId) {
+        var form = document.getElementById(formId);
+        if (form.style.display === "none" || form.style.display === "") {
+            form.style.display = "block";
+        } else {
+            form.style.display = "none";
+        }
+    }
+</script>

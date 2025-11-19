@@ -1,0 +1,21 @@
+{% extends 'core/base.html' %}
+{% block content %}
+    <h2>{{ group.name }}</h2>
+    <p>{{ group.description }}</p>
+    {% if membership %}
+        <p>Your role: {{ membership.role }}</p>
+        <a href="{% url 'group_post' group.id %}">Post to Group</a>
+        {% if membership.role in 'creator,moderator' %}
+            <a href="{% url 'group_moderate' group.id %}">Moderate</a>
+        {% endif %}
+        <a href="{% url 'group_leave' group.id %}">Leave Group</a>
+    {% else %}
+        <a href="{% url 'group_join' group.id %}">Join Group</a>
+    {% endif %}
+    <h3>Posts</h3>
+    {% for post in posts %}
+        <p><a href="{% url 'post_detail' post.id %}">{{ post.title }}</a> by {{ post.user.username }}</p>
+    {% empty %}
+        <p>No posts yet.</p>
+    {% endfor %}
+{% endblock %}

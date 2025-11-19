@@ -1,0 +1,14 @@
+{
+    "items": {
+        "logs": {
+            "id": 1,
+            "name": "Logs",
+            "description": "Basic wood from normal trees"
+        },
+        "oak_logs": {
+            "id": 2,
+            "name": "Oak Logs",
+            "description": "Sturdier wood from oak trees"
+        }
+    }
+}
